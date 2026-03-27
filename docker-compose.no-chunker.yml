@@ -1,0 +1,65 @@
+services:
+  # Extraction Agent (FastAPI/Python + Transformers - CPU optimized)
+  extraction-agent:
+    build:
+      context: ./extraction-agent
+      dockerfile: Dockerfile
+    ports:
+      - '8001:8001'
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - DOCUMENT_SERVICE_URL=http://document-service:8000
+      - TORCH_NUM_THREADS=1
+      - OMP_NUM_THREADS=1
+    networks:
+      - app-network
+    depends_on:
+      document-service:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8001/health']
+      interval: 60s
+      timeout: 45s
+      retries: 2
+      start_period: 180s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+
+  # Update API Gateway to depend on extraction-agent
+  api-gateway:
+    depends_on:
+      document-service:
+        condition: service_healthy
+      extraction-agent:
+        condition: service_healthy
+      search-agent:
+        condition: service_healthy
+      generation-agent:
+        condition: service_healthy
+
+  # Update orchestration-agent to depend on extraction-agent
+  orchestration-agent:
+    depends_on:
+      document-service:
+        condition: service_healthy
+      extraction-agent:
+        condition: service_healthy
+      search-agent:
+        condition: service_healthy
+      generation-agent:
+        condition: service_healthy
+      orchestration-wrapper:
+        condition: service_healthy
+
+  # Update orchestration-wrapper to depend on extraction-agent
+  orchestration-wrapper:
+    depends_on:
+      extraction-agent:
+        condition: service_healthy
