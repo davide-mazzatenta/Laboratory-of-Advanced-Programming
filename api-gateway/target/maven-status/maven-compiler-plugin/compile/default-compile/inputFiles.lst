@@ -1,0 +1,10 @@
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/security/UserPrincipal.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/filter/ErrorHandlerFilter.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/filter/AuthenticationFilter.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/config/RouteConfig.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/security/SupabaseJwtService.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/config/GatewayConfig.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/filter/LoggingFilter.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/config/CorsConfig.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/ApiGatewayApplication.java
+/Users/stefano/Desktop/LexygraphLab/api-gateway/src/main/java/com/docprocessing/gateway/config/SecurityConfig.java
