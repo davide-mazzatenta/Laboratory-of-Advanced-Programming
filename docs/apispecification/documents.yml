@@ -1,0 +1,139 @@
+openapi: 3.0.3
+info:
+  title: Document Storage Service API
+  description: Simple PDF document storage and retrieval service
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+
+paths:
+  /documents/upload:
+    post:
+      summary: Upload PDF document
+      description: Store a PDF document with user, project, and document identifiers
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PDF file to upload
+                userId:
+                  type: string
+                  description: User identifier
+                projectId:
+                  type: string
+                  description: Project identifier
+                docId:
+                  type: string
+                  description: Document identifier
+                title:
+                  type: string
+                  description: Document title
+              required:
+                - file
+                - userId
+                - projectId
+                - docId
+                - title
+      responses:
+        '200':
+          description: Document uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  documentId:
+                    type: string
+                    description: Combined ID (userId_projectId_docId)
+        '400':
+          description: Bad request - invalid parameters or file format
+        '500':
+          description: Internal server error
+
+  /documents/{userId}/{projectId}/{docId}:
+    get:
+      summary: Retrieve PDF document
+      description: Get stored PDF document by composite ID
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: docId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Document retrieved successfully
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Document not found
+        '500':
+          description: Internal server error
+
+  /documents/{userId}/{projectId}:
+    get:
+      summary: List project documents
+      description: Get all documents metadata for a specific project
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Documents list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        docId:
+                          type: string
+                        title:
+                          type: string
+                        content:
+                          type: string
+                          description: Plain text content extracted from PDF
+                        createdAt:
+                          type: string
+                          format: date-time
+        '404':
+          description: Project not found
+        '500':
+          description: Internal server error

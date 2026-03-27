@@ -1,0 +1,53 @@
+/* src/styles/fullscreen-override.css */
+
+/* Reset aggressivo per tutti gli elementi di base */
+html,
+body,
+#root,
+[data-reactroot] {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100vh !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+}
+
+/* Assicurati che nessun elemento limiti la larghezza della pagina */
+.app-root,
+.app-container,
+.dashboard-container,
+.multiagent-container,
+.profile-container,
+.MuiContainer-root,
+.container,
+.layout-container,
+main,
+.main-content,
+section,
+div[role='main'] {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Solo per la pagina di login */
+body.login-page-scope {
+  padding: 40px 20px !important;
+}
+
+.auth-page {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+}
+
+/* Importante: rimuovi qualsiasi padding dal body che non sia scoped */
+body:not(.login-page-scope) {
+  padding: 0 !important;
+}

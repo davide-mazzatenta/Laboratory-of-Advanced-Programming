@@ -1,0 +1,270 @@
+openapi: 3.0.3
+info:
+  title: Orchestration Agent API
+  description: AI-powered orchestration agent that handles planning, document retrieval, and agent coordination
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+
+paths:
+  # ORCHESTRATION AGENT ENDPOINTS (direct communication with OA)
+  /orchestrator/plan:
+    post:
+      summary: Create execution plan from user prompt and documents
+      description: Orchestration Agent retrieves documents and creates execution strategy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                  description: Initial user prompt
+                documentIds:
+                  type: array
+                  items:
+                    type: string
+                  description: List of document IDs selected by user
+                userId:
+                  type: string
+                projectId:
+                  type: string
+              required: [prompt, documentIds, userId, projectId]
+      responses:
+        '200':
+          description: Plan created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  planId:
+                    type: string
+                    description: Unique plan identifier
+                  strategy:
+                    type: string
+                    description: Human-readable execution strategy
+                  estimatedSteps:
+                    type: integer
+                  documentTitles:
+                    type: array
+                    items:
+                      type: string
+                    description: Document titles that will be used
+        '400':
+          description: Bad request - invalid parameters or document retrieval failed
+        '500':
+          description: Internal server error
+
+  /orchestrator/plan/{planId}/modify:
+    post:
+      summary: Modify existing plan with additional instructions
+      description: User provides feedback to refine the execution plan
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                additionalInstructions:
+                  type: string
+                  description: User feedback or modifications to the plan
+              required: [additionalInstructions]
+      responses:
+        '200':
+          description: Plan modified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  planId:
+                    type: string
+                  updatedStrategy:
+                    type: string
+                    description: Refined execution strategy based on feedback
+
+  /orchestrator/plan/{planId}/execute:
+    post:
+      summary: Execute confirmed plan
+      description: Start execution of the confirmed plan - OA will coordinate with other agents
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Execution started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  executionId:
+                    type: string
+                    description: Unique execution identifier
+                  status:
+                    type: string
+                    enum: [started]
+                  message:
+                    type: string
+                    description: Confirmation message
+
+  /orchestrator/execution/{executionId}/status:
+    get:
+      summary: Get execution status and partial results
+      description: Check current progress and receive partial results as they become available
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Current execution status with any available results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  executionId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [in_progress, completed, failed]
+                  progress:
+                    type: object
+                    properties:
+                      completedAgents:
+                        type: integer
+                      totalAgents:
+                        type: integer
+                      currentAgent:
+                        type: string
+                  partialResults:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        agentName:
+                          type: string
+                        documentTitle:
+                          type: string
+                        taskDescription:
+                          type: string
+                        result:
+                          type: object
+                          description: Structured result from agent
+                        status:
+                          type: string
+                          enum: [completed, failed]
+                        completedAt:
+                          type: string
+                          format: date-time
+                  finalSummary:
+                    type: string
+                    description: Only present when status is completed
+                  structuredResults:
+                    type: object
+                    description: Complete structured results for canvas (when completed)
+
+  # ORCHESTRATION SERVICE ENDPOINTS (agent-to-agent routing)
+  /agents/route:
+    post:
+      summary: Route request to specific agent
+      description: OS routes agent requests from OA to target agents and returns responses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetAgent:
+                  type: string
+                  description: Name of the target agent service
+                  enum:
+                    [
+                      extraction-agent,
+                      search-agent,
+                      analysis-agent,
+                      visualization-agent,
+                    ]
+                agentPayload:
+                  type: object
+                  description: Complete payload to send to target agent
+                  properties:
+                    prompt:
+                      type: string
+                    documentIds:
+                      type: array
+                      items:
+                        type: string
+                    parameters:
+                      type: object
+                      description: Agent-specific parameters
+                  required: [prompt, documentIds]
+              required: [targetAgent, agentPayload]
+      responses:
+        '200':
+          description: Agent response received and forwarded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agentName:
+                    type: string
+                  response:
+                    type: object
+                    description: Raw response from target agent
+                  status:
+                    type: string
+                    enum: [success, failed]
+                  processingTime:
+                    type: number
+                    description: Time taken by agent in seconds
+        '400':
+          description: Invalid agent name or payload
+        '502':
+          description: Target agent unavailable or error
+        '500':
+          description: Routing error
+
+  # HEALTH CHECK
+  /orchestrator/health:
+    get:
+      summary: Health check for orchestration agent
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  connectedAgents:
+                    type: array
+                    items:
+                      type: string
+                    description: List of available target agents
